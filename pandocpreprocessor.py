@@ -15,7 +15,8 @@ class Document():
     def ConvertExamples(self):
         expat = re.compile(r'^ ?\(@(ee_[^\)]+)\)(.*)',re.MULTILINE)
         endpat = re.compile(r'(^ ?\(@(ee_[^\)]+)\).*|^$)',re.MULTILINE)
-        for exmatch in expat.finditer(self.text):
+        exmatch = expat.search(self.text)
+        while exmatch:
             rest = self.text[exmatch.end()+1:].splitlines()
             for line in rest:
                 endmark = endpat.match(line)
@@ -24,6 +25,7 @@ class Document():
                     self.text = self.text[:exmatch.start()] + self.WrapExe(exmatch.group(2),exmatch.group(1)) + self.text[exmatch.end()+1+endmark.start():]
                     #self.text = "{left}{right}".format(left="1",right="2")
                     break
+            exmatch = expat.search(self.text)
 
 
     def Finalize(self):
