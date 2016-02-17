@@ -12,23 +12,16 @@ class Document():
         """Read text data etc """
         with open(fname,'r') as f:
             self.lines = f.read().splitlines()
+            self.text = f.read()
         self.doctype = doctype
 
     def ConvertExamples(self):
-        expat = re.compile(r'^\s?\(@(ee_[^\)]+)\)')
+        expat = re.compile(r'^\s?\(@(ee_[^\)]+)\)',re.MULTILINE)
         exstart = None
         exbegun = False
-        for idx, line in enumerate(self.lines):
-            exline = expat.match(line)
-            if exbegun and (exline or not line):
+        for exstart in expat.finditer(self.text):
+            import ipdb; ipdb.set_trace()
 
-            elif exline:
-                exlabel = exline.group(1)
-                exstart = exline.start()
-                exbegun=True
-
-        #for exstart in expat.finditer(self.text):
-        #    import ipdb; ipdb.set_trace()
 
 doc = Document(sys.argv[1],"tex")
 doc.ConvertExamples()
