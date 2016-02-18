@@ -10,27 +10,27 @@ class Document():
 
     def __init__(self,fname,doctype):
         """Read text data etc """
-        if type(fname) == 'list':
-        else:
-            with open(fname,'r') as f:
-                self.text = f.read()
-                lines = self.text.splitlines()
-        #ycount = 0
-        #self.yaml = ""
+        folder = '/home/juho/Dropbox/opetus/aspekti-ja-liikeverbiteoria/aihekokonaisuudet/'
+        with open(folder + fname,'r') as f:
+            self.text = f.read()
+            lines = self.text.splitlines()
 
-        #for idx, line in enumerate(lines):
-        #    self.yaml += line + "\n"
-        #    if line[0:3] == '---':
-        #        ycount += 1
-        #    if ycount == 2:
-        #        break
+        ycount = 0
+        self.yaml = ""
 
-        #self.text = "\n".join(lines[idx:])
-        #self.text = self.text[3:]
-        #self.text = self.text[3:8]
+        for idx, line in enumerate(lines):
+            self.yaml += line + "\n"
+            if line[0:3] == '---':
+                ycount += 1
+            if ycount == 2:
+                break
+
+        self.text = "\n".join(lines[idx:])
+        self.text = self.text[3:]
 
         self.doctype = doctype
         if doctype=="tex":
+            self.text = self.text.replace("―","--")
             self.preamp = r"""\documentclass[a4paper]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -74,10 +74,25 @@ class Document():
         for example in examples:
             self.text = example.AddReferences(self.text)
 
+    def CleanTopBar(self):
+        """Divs with clas definition"""
+        soup = BeautifulSoup(self.text)
+        #top bar
+        bar = soup.find('article',{'id':'topbar'})
+        if bar:
+            bar.extract()
+        #special headers
+        bar = soup.find('p',{'class':'header'})
+        if bar:
+            bar.replaceWith("\chapter{" +  bar.text + "}\n")
+        # css arrows
+        arrows = soup.findAll('span',{'class':'right-arrow'})
+        for arrow in arrows:
+            arrow.replaceWith(arrow.text + r" \textrightarrow ")
+        self.text = str(soup)
+
     def ConvertDefinitions(self):
         """Divs with clas definition"""
-        #divpat = re.compile(r'.*<div .*definition.*')
-        #kkl
         soup = BeautifulSoup(self.text)
         defdivs = soup.findAll('div',{'class':'definition'})
         for div in defdivs:
@@ -126,14 +141,23 @@ def InsertDefinition(htext, dtext):
     #return beginning + htext + ":" + r"\\" + dtext + end
     return beginning + dtext + end
 
-doc = Document(sys.argv[1],"tex")
-doc.ConvertExamples()
-doc.ConvertDefinitions()
-doc.Finalize()
+docs = list()
 
+for fname in sys.argv[1:]:
+    doc = Document(fname,"tex")
+    doc.CleanTopBar()
+    doc.ConvertExamples()
+    doc.ConvertDefinitions()
+    docs.append(doc)
 
-#print(m)
+#doc.Finalize()
 
-#expat.sub('',istr)
+fullstring = docs[0].yaml
+
+for doc in docs:
+    fullstring += "\n" + doc.text
+ 
+with open('/home/juho/Dropbox/opetus/aspekti-ja-liikeverbiteoria/aihekokonaisuudet/aspektijaliikeverbiteoria.md','w') as f:
+    f.write(fullstring)
 
 
