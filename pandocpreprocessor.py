@@ -31,14 +31,6 @@ class Document():
         self.doctype = doctype
         if doctype=="tex":
             self.text = self.text.replace("―","--")
-            self.preamp = r"""\documentclass[a4paper]{article}
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage[T2A]{fontenc}
-\usepackage[finnish]{babel}
-\usepackage{linguex} 
-\usepackage{amsthm}
-\newtheorem{maar}{Määritelmä}"""
 
     def ConvertExamples(self):
         expat = re.compile(r'^ ?\(@(ee_[^\)]+)\)(.*)',re.MULTILINE)
@@ -74,7 +66,7 @@ class Document():
         for example in examples:
             self.text = example.AddReferences(self.text)
 
-    def CleanTopBar(self):
+    def HtmlCleaning(self):
         """Divs with clas definition"""
         soup = BeautifulSoup(self.text)
         #top bar
@@ -89,7 +81,20 @@ class Document():
         arrows = soup.findAll('span',{'class':'right-arrow'})
         for arrow in arrows:
             arrow.replaceWith(arrow.text + r" \textrightarrow ")
+
+        #colors
+
+        #redcol = soup.findAll('span',{'class','r'})
+        #for red in redcol:
+        #    red.replaceWith(r'\color{red}' + red.text + r"}")
+
         self.text = str(soup)
+
+        #html links:
+        linkpat = re.compile(r'\([^\)]+\.html\#([^\)]+)\)')
+        self.text = linkpat.sub(r'\1',self.text)
+
+
 
     def ConvertDefinitions(self):
         """Divs with clas definition"""
@@ -133,6 +138,11 @@ class Example():
 
         return text
 
+def ReplaceTagWithText(soup,tag,attrdict,replacement):
+    arrows = soup.findAll(tag,attrdict)
+    for arrow in arrows:
+        arrow.replaceWith(arrow.text + r" \textrightarrow ")
+    pass
 
 def InsertDefinition(htext, dtext):
     """Insert a definition in tex"""
@@ -145,7 +155,7 @@ docs = list()
 
 for fname in sys.argv[1:]:
     doc = Document(fname,"tex")
-    doc.CleanTopBar()
+    doc.HtmlCleaning()
     doc.ConvertExamples()
     doc.ConvertDefinitions()
     docs.append(doc)
